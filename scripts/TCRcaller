@@ -1,7 +1,98 @@
-#! /bin/env python
+#! /usr/bin/env python
 
 def main():
-    import database
-    database.test()
+    app = TCRcaller()
+    app.run()
+
+class TCRcaller(object):
+    
+    def __init__(self,):
+        
+        self.availableCommands = ['init','addSample','addFastq']
+        
+        # import packages
+        import sys
+        import os
+        import time
+
+        self.initMessages = ''
+
+        # get command from commandline arguments
+        try: TCRcaller.command = sys.argv[1]
+        except IndexError:
+            TCRcaller.command = None
+            msg = '#ERROR#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Commandline not valid, should be on the form "TCRcaller <command> <path> <options>" (currently: "'+' '.join(sys.argv)+'")\n'
+            self.initMessages += msg
+            sys.stderr.write(msg)
+        
+        # validate command
+        if TCRcaller.command not in self.availableCommands:
+            msg = '#ERROR#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Command not valid, should be one of the following "'+'", "'.join(self.availableCommands)+'" (currently: "'+str(TCRcaller.command)+'")\n'
+            TCRcaller.command = None
+            self.initMessages += msg
+            sys.stderr.write(msg)
+        
+        # get path from commandline arguments
+        try: TCRcaller.path = os.path.abspath(sys.argv[2])
+        except IndexError:
+            TCRcaller.path = None
+            msg = '#ERROR#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Commandline not valid, should be on the form "TCRcaller <command> <path> <options>" (currently: "'+' '.join(sys.argv)+'")\n'
+            self.initMessages += msg
+            sys.stderr.write(msg)
+        
+        if 'ERROR' in self.initMessages and TCRcaller.path == None: sys.exit()
+        
+        self.initOrConnect()
+    
+    def initOrConnect(self):
+
+        # import packages
+        import os
+        import shutil
+        import TCRLib.database
+        import time
+
+        # look for path
+        pathExists = os.path.exists(TCRcaller.path)
+        if not pathExists:
+            msg = '#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Creating folder "'+TCRcaller.path+'".\n'
+            self.initMessages += msg
+            os.makedirs(TCRcaller.path)
+
+        # open connection to logfile
+        self.openLogfileConnection()
+
+        # Connect to or create database for storing information
+        databaseExists = os.path.exists(TCRcaller.path+'/informationStorage')
+        TCRcaller.database = TCRLib.database.Database(TCRcaller.path+'/informationStorage')
+        if not pathExists or not databaseExists:
+            msg = '#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Creating the database "'+TCRcaller.database.path+'".\n'
+            TCRcaller.logfile.write(msg)
+            TCRcaller.database.create()
+
+    def openLogfileConnection(self,):
+        """ open a connection to the logfile, creates a logfile if none is present """
+
+        # Imports
+        import sys
+        import time
+        import os
+
+        # check if logfile present open connection or create
+        TCRcaller.logfile = TCRcaller.path + '/logfile.txt'
+        if os.path.isfile(TCRcaller.logfile):
+            TCRcaller.logfile = open(AnalysisPipe.logfile,'a',1)
+            TCRcaller.logfile.write('----------------\n#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Connection to logfile '+TCRcaller.logfile.name+' opened.\n')
+            return 0
+        else:
+            msg = '#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Creating the logfile "'+TCRcaller.logfile+'".\n'
+            self.initMessages += msg
+            TCRcaller.logfile = open(TCRcaller.logfile,'w',1)
+        TCRcaller.logfile.write(self.initMessages)
+    
+    def run(self):
+        import TCRLib.database
+        TCRLib.database.test()
+
 
 if __name__ == "__main__": main()
