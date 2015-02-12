@@ -1,0 +1,7 @@
+#! /bin/env python
+
+def main():
+    import database
+    database.test()
+
+if __name__ == "__main__": main()
