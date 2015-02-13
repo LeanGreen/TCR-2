@@ -7,8 +7,14 @@ def test():
 
 class Database(object):
 
-    def __init__(self, dbPath):
+    def __init__(self, dbPath, TCRcaller, logfile=''):
 	self.path = dbPath
+	self.logfile=logfile
+	self.TCRcaller=TCRcaller
+	if type(self.logfile) == str():
+	    import sys
+	    sys.stderr.write('LOGFILE ERROR! IN DTATBASE')
+	    sys.exit()
 
     def getConnection(self,):
 	#
@@ -86,6 +92,7 @@ class Database(object):
 	#
 	import sys
 	import time
+	import sample
 	
 	#
 	# open connection to database
@@ -106,18 +113,18 @@ class Database(object):
 		sampleIds.append(sampleId)
 	    if newSampleName in sampleNames:
 		msg = '#ERROR_MSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# SampleName must be uniq, there is already a sample with name '+newSampleName+' , exiting.\n'
-		AnalysisPipe.logfile.write(msg)
+		self.logfile.write(msg)
 		sys.stderr.write(msg)
 		sys.exit(1)
 
 	
 	if sampleIds:  sampleId = max(sampleIds)+1
 	else:          sampleId = 0 
-	AnalysisPipe.logfile.write('#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Adding sample '+newSampleName+' to database with id '+str(sampleId)+'.\n')
+	self.logfile.write('#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Adding sample '+newSampleName+' to database with id '+str(sampleId)+'.\n')
 	values = (sampleId,newSampleName,newSampleRefType)
 	self.c.execute('INSERT INTO samples VALUES (?,?,?)', values)
 	
-	sample = Sample(sampleName=newSampleName, sampleId=sampleId,refType=newSampleRefType)
+	sample = sample.Sample(self.TCRcaller, sampleName=newSampleName, sampleId=sampleId,refType=newSampleRefType)
 	sample.createDirs()
 	
 	self.commitAndClose()
@@ -168,7 +175,7 @@ class Database(object):
 
 	self.commitAndClose()
 
-    def addFastqs(self, sampleNameOrId, fastq1, fastq2):
+    def addFastq(self, sampleNameOrId, fastq1, fastq2):
 
 	#
 	# Imports
@@ -180,7 +187,7 @@ class Database(object):
 	fastq1 = os.path.abspath(fastq1)
 	fastq2 = os.path.abspath(fastq2)
 	
-	samples = AnalysisPipe.database.getSamples()
+	samples = TCRcaller.database.getSamples()
 	samplesbyName = {}
 	samplesbyId = {}
 	for sample in samples:
@@ -199,7 +206,7 @@ class Database(object):
 	    sampleId = samplesbyName[sampleName].id
 	else:
 	    msg = '#ERROR_MSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# SampleName (or id) must be registered in the database, there is no sample with name or id '+str(sampleNameOrId)+' ('+str(type(sampleNameOrId))+') , exiting.\n'
-	    AnalysisPipe.logfile.write(msg)
+	    self.logfile.write(msg)
 	    sys.stderr.write(msg)
 	    sys.exit(1)
 
@@ -223,14 +230,14 @@ class Database(object):
 		    if fastq in filePair:
 			message = 'ERROR: '+fastq+' already in the database.\nExiting after error.'
 			print message
-			AnalysisPipe.logfile.write(message+'\n')
+			self.logfile.write(message+'\n')
 			sys.exit(1)
 	#
 	# if not in the database add a new row
 	#
-	AnalysisPipe.logfile.write('Getting readcount for file'+fastq1+' ... \n')
+	self.logfile.write('Getting readcount for file'+fastq1+' ... \n')
 	readCount = 'Unknown'#bufcount(fastq1)/4 #one read is four lines
-	AnalysisPipe.logfile.write('...done. The file has '+str(readCount)+' reads.\n')
+	self.logfile.write('...done. The file has '+str(readCount)+' reads.\n')
 	addedToReadsTable = False#SEAseqPipeLine.startTimeStr
 	minReadLength = 'NA'
 

@@ -8,14 +8,18 @@ class TCRcaller(object):
     
     def __init__(self,):
         
-        self.availableCommands = ['init','addSample','addFastq']
+        self.availableCommands = {
+            'init':self.init,
+            'addSample':self.addSample,
+            'addFastq':self.addFastq
+            }
         
         # import packages
         import sys
         import os
         import time
 
-        self.initMessages = ''
+        self.initMessages = '----------------\n#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Running: '+' '.join(sys.argv)+'\n'
 
         # get command from commandline arguments
         try: TCRcaller.command = sys.argv[1]
@@ -43,13 +47,15 @@ class TCRcaller(object):
         if 'ERROR' in self.initMessages and TCRcaller.path == None: sys.exit()
         
         self.initOrConnect()
-    
+
+    def init(self): pass
+
     def initOrConnect(self):
 
         # import packages
         import os
         import shutil
-        import TCRLib.database
+        import TCRLib
         import time
 
         # look for path
@@ -60,39 +66,53 @@ class TCRcaller(object):
             os.makedirs(TCRcaller.path)
 
         # open connection to logfile
-        self.openLogfileConnection()
+        TCRcaller.logfile = TCRLib.logfile.Logfile(TCRcaller.path+'/logfile.txt', initMessages=self.initMessages)
 
         # Connect to or create database for storing information
         databaseExists = os.path.exists(TCRcaller.path+'/informationStorage')
-        TCRcaller.database = TCRLib.database.Database(TCRcaller.path+'/informationStorage')
+        TCRcaller.database = TCRLib.database.Database(TCRcaller.path+'/informationStorage',TCRcaller,logfile=TCRcaller.logfile)
         if not pathExists or not databaseExists:
             msg = '#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Creating the database "'+TCRcaller.database.path+'".\n'
             TCRcaller.logfile.write(msg)
             TCRcaller.database.create()
-
-    def openLogfileConnection(self,):
-        """ open a connection to the logfile, creates a logfile if none is present """
-
-        # Imports
-        import sys
-        import time
-        import os
-
-        # check if logfile present open connection or create
-        TCRcaller.logfile = TCRcaller.path + '/logfile.txt'
-        if os.path.isfile(TCRcaller.logfile):
-            TCRcaller.logfile = open(AnalysisPipe.logfile,'a',1)
-            TCRcaller.logfile.write('----------------\n#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Connection to logfile '+TCRcaller.logfile.name+' opened.\n')
-            return 0
-        else:
-            msg = '#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Creating the logfile "'+TCRcaller.logfile+'".\n'
-            self.initMessages += msg
-            TCRcaller.logfile = open(TCRcaller.logfile,'w',1)
-        TCRcaller.logfile.write(self.initMessages)
     
     def run(self):
-        import TCRLib.database
-        TCRLib.database.test()
 
+        # run command specific function
+        if TCRcaller.command:self.availableCommands[TCRcaller.command]()
+
+    def addSample(self,):
+
+        # import packages
+        import sys
+        import time
+
+        # get sample name from commandline
+        try: sampleName = sys.argv[3]
+        except IndexError:
+            sampleName = None
+            msg = '#ERROR#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Please supply a sample name on the commandline "TCRcaller addSample <path> <sampleName>" (currently: "'+' '.join(sys.argv)+'")\n'
+            TCRcaller.logfile.write(msg)
+            sys.stderr.write(msg)
+
+        #try to add the name to the database
+        if sampleName: TCRcaller.database.addSample(sampleName)
+
+    def addFastq(self,):
+
+        # import packages
+        import sys
+        import time
+
+        # get sample name from commandline
+        try: sampleName = sys.argv[3]
+        except IndexError:
+            sampleName = None
+            msg = '#ERROR#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Please supply one or several fastq files on the commandline "TCRcaller addFastq <path> <r1> <r2>" (currently: "'+' '.join(sys.argv)+'")\n'
+            TCRcaller.logfile.write(msg)
+            sys.stderr.write(msg)
+
+        #try to add the name to the database
+        if sampleName: TCRcaller.database.addFastq(sampleName)
 
 if __name__ == "__main__": main()
