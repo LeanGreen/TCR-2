@@ -108,11 +108,27 @@ class TCRcaller(object):
         try: sampleName = sys.argv[3]
         except IndexError:
             sampleName = None
-            msg = '#ERROR#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Please supply one or several fastq files on the commandline "TCRcaller addFastq <path> <r1> <r2>" (currently: "'+' '.join(sys.argv)+'")\n'
+            msg = '#ERROR#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Please supply a sample name on the commandline "TCRcaller addFastq <path> <sampleName> <r1> <r2>" (currently: "'+' '.join(sys.argv)+'")\n'
+            TCRcaller.logfile.write(msg)
+            sys.stderr.write(msg)
+
+        # get r1 from commandline
+        try: r1 = sys.argv[4]
+        except IndexError:
+            r1 = None
+            msg = '#ERROR#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Please supply one or several fastq files on the commandline "TCRcaller addFastq <path> <sampleName> <r1> <r2>" (currently: "'+' '.join(sys.argv)+'")\n'
+            TCRcaller.logfile.write(msg)
+            sys.stderr.write(msg)
+
+        # get r2 from commandline
+        try: r2 = sys.argv[5]
+        except IndexError:
+            r2 = None
+            msg = '#WARNING#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Only one fastq file seems to be on the commandline, adding singlet reads "TCRcaller addFastq <path> <sampleName> <r1> <r2>" (currently: "'+' '.join(sys.argv)+'")\n'
             TCRcaller.logfile.write(msg)
             sys.stderr.write(msg)
 
         #try to add the name to the database
-        if sampleName: TCRcaller.database.addFastq(sampleName)
+        if sampleName: TCRcaller.database.addFastq(sampleName,r1,r2)
 
 if __name__ == "__main__": main()

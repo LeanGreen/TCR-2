@@ -137,23 +137,24 @@ class Database(object):
 	#
 	import sys
 	import time
-	
+	import TCRLib
+
 	#
 	# open connection to database
 	#
 	self.getConnection()
-	
+
 	refSamples = []
 	samples = []
-	
+
 	data = self.c.execute('SELECT sampleId,sampleName,refType FROM samples').fetchall()
 	if data:
 	    for (sampleId,sampleName,sampleRefType) in data:
-		if sampleRefType: refSamples.append( Sample(sampleName=sampleName,sampleId=int(sampleId),refType=sampleRefType) )
-		else:                samples.append( Sample(sampleName=sampleName,sampleId=int(sampleId),refType=None) )
-	
+		if sampleRefType: refSamples.append( TCRLib.sample.Sample(self.TCRcaller, sampleName=sampleName,sampleId=int(sampleId),refType=sampleRefType) )
+		else:                samples.append( TCRLib.sample.Sample(self.TCRcaller, sampleName=sampleName,sampleId=int(sampleId),refType=None) )
+
 	self.commitAndClose()
-	
+
 	return refSamples+samples
 
     def updateFastqReadCount(self,sample):
@@ -185,9 +186,10 @@ class Database(object):
 	import time
 	
 	fastq1 = os.path.abspath(fastq1)
-	fastq2 = os.path.abspath(fastq2)
+	try:fastq2 = os.path.abspath(fastq2)
+	except AttributeError: fastq2=None
 	
-	samples = TCRcaller.database.getSamples()
+	samples = self.TCRcaller.database.getSamples()
 	samplesbyName = {}
 	samplesbyId = {}
 	for sample in samples:
@@ -235,9 +237,9 @@ class Database(object):
 	#
 	# if not in the database add a new row
 	#
-	self.logfile.write('Getting readcount for file'+fastq1+' ... \n')
+	#self.logfile.write('Getting readcount for file'+fastq1+' ... \n')
 	readCount = 'Unknown'#bufcount(fastq1)/4 #one read is four lines
-	self.logfile.write('...done. The file has '+str(readCount)+' reads.\n')
+	#self.logfile.write('...done. The file has '+str(readCount)+' reads.\n')
 	addedToReadsTable = False#SEAseqPipeLine.startTimeStr
 	minReadLength = 'NA'
 
