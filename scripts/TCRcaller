@@ -78,8 +78,11 @@ class TCRcaller(object):
     
     def run(self):
 
-        # run command specific function
-        if TCRcaller.command:self.availableCommands[TCRcaller.command]()
+        if 'getTools' in sys.argv: self.getTools()
+        else:
+
+            # run command specific function
+            if TCRcaller.command:self.availableCommands[TCRcaller.command]()
 
     def addSample(self,):
 
@@ -130,5 +133,30 @@ class TCRcaller(object):
 
         #try to add the name to the database
         if sampleName: TCRcaller.database.addFastq(sampleName,r1,r2)
+
+    def getTools(self,):
+        
+        import sys
+        import os
+        
+        # find script path
+        path = os.path.abspath(sys.argv[0])
+        os.path.relpath(path, sys.argv[0])
+        
+        # make bin directory
+        try: os.mkdir(path+'/bin')
+        except OSError: pass
+        
+        #bowtie
+        if not os.path.exists(path+'/bin/bowtie'):
+            pass
+        #samtools
+        if not os.path.exists(path+'/bin/samtools'):
+            pass
+        #velvet
+        if not os.path.exists(path+'/bin/velvet'):
+            pass
+
+    def getNCBIreference(self,): pass
 
 if __name__ == "__main__": main()

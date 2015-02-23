@@ -133,4 +133,30 @@ class Sample(object):
 	AnalysisPipe.logfile.write('#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Loaded oriantation stats for sample '+self.name+' joining to main...\n')
 	return orientations
 
+    def align(self,):
+	#bowtie2 -x references/ncbi.T_cell_receptor_beta.Human.mRNA.fa -U data/mnt/davidson/sandberglab/pipeline2.0/rnaseq/hsa/simone_picelli_T-cells/rawdata/$i/Run00221_L7_1_140213_SN893_0221_BC3H8JACXX_*.fastq.gz -U data/mnt/davidson/sandberglab/pipeline2.0/rnaseq/hsa/simone_picelli_T-cells/rawdata/$i/Run00223_L3_1_140220_SN893_0223_BC3JDHACXX_*.fastq.gz -S $i.sam --very-sensitive-local -p16
+	#samtools view -Sb $i.sam > $i.bam
+	#samtools sort $i.bam $i.sorted
+        #samtools index $i.sorted.bam
+	pass
+    
+    def getAlignedReadsPairs(self, ):
+	#samtools view -F 4 -q 20 $i.sorted.bam | cut -f 1,10,11 | awk '{print "@" $1 "\n" $2 "\n+\n" $3}' > $i.mapqMoreThan20.fq
+	pass
+
+    def assemble(self,):
+#	velveth $i 21 -fastq -short $i.mapqMoreThan20.fq
+#	velvetg $i/ -cov_cutoff auto
+	pass
+
+    def report(self,):
+#	cat $i/contigs.fa
+#	mv -v $i* $i
+#	echo -e "\n### The reads mapped to the following gi: "
+#	samtools view -F 4 -q 20 $i/$i.sorted.bam | cut -f3 | sort | uniq -c;
+#	echo -e "\n### same as to the following sequences: "
+#	echo -e $(for name in $(samtools view -F 4 -q 20 $i/$i.sorted.bam | cut -f3 | sort | uniq); do grep $name references/ncbi.T_cell_receptor_beta.Human.mRNA.fa;done) | sed s/\>/\\\n/g | grep -P "T|cell|receptor|beta|$" --color=Always
+	pass
+    
+
 if __name__ == "__main__": main()
