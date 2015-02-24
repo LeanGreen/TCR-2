@@ -11,7 +11,8 @@ class TCRcaller(object):
         self.availableCommands = {
             'init':self.init,
             'addSample':self.addSample,
-            'addFastq':self.addFastq
+            'addFastq':self.addFastq,
+            'getTools':self.getTools
             }
         
         # import packages
@@ -78,6 +79,8 @@ class TCRcaller(object):
     
     def run(self):
 
+        import sys
+        
         if 'getTools' in sys.argv: self.getTools()
         else:
 
@@ -138,25 +141,124 @@ class TCRcaller(object):
         
         import sys
         import os
+        import urllib
+        import subprocess
         
         # find script path
         path = os.path.abspath(sys.argv[0])
-        os.path.relpath(path, sys.argv[0])
-        
+        path = os.path.abspath('/'.join(sys.argv[0].split('/')[:-2]))
+
         # make bin directory
         try: os.mkdir(path+'/bin')
         except OSError: pass
+        currentPath = os.path.abspath('.')
         
         #bowtie
-        if not os.path.exists(path+'/bin/bowtie'):
-            pass
-        #samtools
-        if not os.path.exists(path+'/bin/samtools'):
-            pass
-        #velvet
-        if not os.path.exists(path+'/bin/velvet'):
-            pass
+        if not os.path.exists(path+'/bin/bowtie2-2.2.4'):
+            sys.stderr.write('Fetching bowtie...')
+            bowtie2Link="http://downloads.sourceforge.net/project/bowtie-bio/bowtie2/2.2.4/bowtie2-2.2.4-linux-x86_64.zip?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fbowtie-bio%2Ffiles%2Fbowtie2%2F2.2.4%2F&ts=1424705468&use_mirror=heanet"
+            if sys.platform=='darwin':bowtie2Link="http://downloads.sourceforge.net/project/bowtie-bio/bowtie2/2.2.4/bowtie2-2.2.4-macos-x86_64.zip?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fbowtie-bio%2Ffiles%2Fbowtie2%2F2.2.4%2F&ts=1424705504&use_mirror=heanet"
+            urllib.urlretrieve (bowtie2Link, path+'/bin/'+"bt2.zip")
+            os.chdir(path+'/bin')
 
+            sys.stderr.write('done\n')
+            
+            sys.stderr.write('decompressing bowtie ...')
+            command = ['unzip',path+'/bin/'+"bt2.zip"]
+            unzip = subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE )
+            errdata = unzip.communicate()
+            if unzip.returncode != 0:
+		print 'cmd: '+' '.join( command )
+		print 'unzip view Error code', unzip.returncode, errdata
+		sys.exit()
+            sys.stderr.write('done\n')
+            
+            os.chdir(currentPath)
+            sys.stderr.write('testing bowtie...')
+            command = [path+'/bin/bowtie2-2.2.4/'+'bowtie2','--version']
+            bt2 = subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE )
+            errdata = bt2.communicate()
+            if bt2.returncode != 0:
+		print 'cmd: '+' '.join( command )
+		print 'bt2 view Error code', bt2.returncode, errdata
+		sys.exit()
+            sys.stderr.write('done\n')
+
+        #samtools
+        if not os.path.exists(path+'/bin/samtools-1.2'):
+            sys.stderr.write('Fetching samtools...')
+
+            samtoolsLink="http://downloads.sourceforge.net/project/samtools/samtools/1.2/samtools-1.2.tar.bz2?r=&ts=1424705289&use_mirror=cznic"
+            urllib.urlretrieve (samtoolsLink, path+'/bin/'+"samtools.tar.bz2")
+            sys.stderr.write('done\n')
+            os.chdir(path+'/bin')
+
+            sys.stderr.write('decompressing samtools ...')
+            command = ['tar','-xvzf',path+'/bin/'+"samtools.tar.bz2"]
+            tar = subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE )
+            errdata = tar.communicate()
+            if tar.returncode != 0:
+		print 'cmd: '+' '.join( command )
+		print 'tar view Error code', tar.returncode, errdata
+		sys.exit()
+            sys.stderr.write('done\n')
+            
+            os.chdir(path+'/bin/samtools-1.2')
+            sys.stderr.write('building samtools...')
+            command = ['make']
+            build = subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE )
+            errdata = build.communicate()
+#            if bt2.returncode != 0:
+#		print 'cmd: '+' '.join( command )
+#		print 'bt2 view Error code', bt2.returncode, errdata
+#		sys.exit()
+            sys.stderr.write('done\n')
+
+            os.chdir(currentPath)
+            sys.stderr.write('testing samtools...')
+            command = [path+'/bin/samtools-1.2/'+'samtools','--version']
+            samtools = subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE )
+            errdata = samtools.communicate()
+            if samtools.returncode != 0:
+		print 'cmd: '+' '.join( command )
+		print 'bt2 view Error code', samtools.returncode, errdata
+		sys.exit()
+            sys.stderr.write('done\n')
+
+        #velvet
+        if not os.path.exists(path+'/bin/velvet_1.2.10'):
+            sys.stderr.write('Fetching velvet...')
+            velvetLink="https://www.ebi.ac.uk/~zerbino/velvet/velvet_1.2.10.tgz"
+            urllib.urlretrieve (velvetLink, path+'/bin/'+"velvet.tgz")
+            sys.stderr.write('done\n')
+            os.chdir(path+'/bin')
+            
+            sys.stderr.write('decompressing velvet ...')
+            command = ['tar','-xvzf',path+'/bin/'+"velvet.tgz"]
+            tar = subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE )
+            errdata = tar.communicate()
+            if tar.returncode != 0:
+		print 'cmd: '+' '.join( command )
+		print 'tar view Error code', tar.returncode, errdata
+		sys.exit()
+            sys.stderr.write('done\n')
+            
+            os.chdir(path+'/bin/velvet_1.2.10')
+            sys.stderr.write('building velvet_1.2.10 ...')
+            command = ['make']
+            build = subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE )
+            errdata = build.communicate()
+#            if bt2.returncode != 0:
+#		print 'cmd: '+' '.join( command )
+#		print 'bt2 view Error code', bt2.returncode, errdata
+#		sys.exit()
+            sys.stderr.write('done\n')
+
+            os.chdir(currentPath)
+            sys.stderr.write('velvet_1.2.10 is not tested automatically and might need to be tested manually...')
+            sys.stderr.write('done\n')
+
+            
     def getNCBIreference(self,): pass
 
 if __name__ == "__main__": main()
