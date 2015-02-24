@@ -12,7 +12,8 @@ class TCRcaller(object):
             'init':self.init,
             'addSample':self.addSample,
             'addFastq':self.addFastq,
-            'getTools':self.getTools
+            'getTools':self.getTools,
+            'findTCR':self.findTCR
             }
         
         # import packages
@@ -318,5 +319,10 @@ class TCRcaller(object):
             print 'tar view Error code', bt2build.returncode, errdata
             sys.exit()
         sys.stderr.write('done\n')
+
+    def findTCR(self):
+        
+        for sample in TCRcaller.database.getSamples():
+            sample.align()
         
 if __name__ == "__main__": main()
