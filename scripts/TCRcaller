@@ -324,5 +324,9 @@ class TCRcaller(object):
         
         for sample in TCRcaller.database.getSamples():
             sample.align()
+            sample.postAlign()
+            sample.getAlignedReadsPairs()
+            sample.assemble()
+            sample.report()
         
 if __name__ == "__main__": main()
