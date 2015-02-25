@@ -229,7 +229,7 @@ class Database(object):
 		filePairId = int(filePair[0])
 		filePairIds.append(filePairId)
 		for fastq in [fastq1, fastq2]:
-		    if fastq in filePair:
+		    if fastq in filePair and fastq!=None:
 			message = 'ERROR: '+fastq+' already in the database.\nExiting after error.'
 			print message
 			self.logfile.write(message+'\n')
