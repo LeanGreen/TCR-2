@@ -50,6 +50,7 @@ class Sample(object):
 	import glob
 	import os
 	import sys
+	import time
 	import subprocess
 	import multiprocessing
 
@@ -61,22 +62,25 @@ class Sample(object):
 
 	for fastq in self.getFastqs():
 	    
-	    sys.stderr.write('aligning '+self.name+' fastq '+fastq[2]+'...')
+	    bt2log = open(self.logPath+'/bt2log.'+str(fastq[0])+'.txt','w')
+	    self.TCRcaller.logfile.write('#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Aligning Sample='+self.name+', Fastq id='+str(fastq[0])+' with name='+fastq[2]+' ...\n')
 	    if fastq[3]: command = [path+'/bin/bowtie2-2.2.4/'+'bowtie2','-x',latestref,'-U',fastq[2],'-U',fastq[3],'-S',self.dataPath+'/'+str(fastq[0])+'.sam','--very-sensitive-local','-p',str(multiprocessing.cpu_count())]
 	    else:        command = [path+'/bin/bowtie2-2.2.4/'+'bowtie2','-x',latestref,'-U',fastq[2],'-S',self.dataPath+'/'+str(fastq[0])+'.sam','--very-sensitive-local','-p',str(multiprocessing.cpu_count())]
-	    #sys.stderr.write('running: '+' '.join(command)+'\n')
-	    bt2 = subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE )
+	    #self.TCRcaller.logfile.write('running: '+' '.join(command)+'\n')
+	    bt2 = subprocess.Popen(command,stdout=subprocess.PIPE,stderr=bt2log )
 	    errdata = bt2.communicate()
 	    if bt2.returncode != 0:
 	        print 'cmd: '+' '.join( command )
 	        print 'bt2 view Error code', bt2.returncode, errdata
 	        sys.exit()
-	    sys.stderr.write('done\n')	    
+	    #self.TCRcaller.logfile.write('done\n')
+	    bt2log.close()
 
     def postAlign(self,):
 
 	import glob
 	import os
+	import time
 	import sys
 	import subprocess
 	import multiprocessing
@@ -89,7 +93,7 @@ class Sample(object):
 
 	for fastq in self.getFastqs():
 
-	    sys.stderr.write('converting '+self.name+' samfile '+str(fastq[0])+' to bam...')
+	    self.TCRcaller.logfile.write('#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Converting Sample='+self.name+' samfileId='+str(fastq[0])+' to bam ...\n')
 	    bam = open(self.dataPath+'/'+str(fastq[0])+'.bam','wb')
 	    command = [path+'/bin/samtools-1.2/'+'samtools','view','-Sb',self.dataPath+'/'+str(fastq[0])+'.sam']
 	    samtools = subprocess.Popen(command,stdout=bam,stderr=subprocess.PIPE )
@@ -98,11 +102,11 @@ class Sample(object):
 	        print 'cmd: '+' '.join( command )
 	        print 'bt2 view Error code', samtools.returncode, errdata
 	        sys.exit()
-	    sys.stderr.write('done\n')
+	    #self.TCRcaller.logfile.write('done\n')
 	    os.remove(self.dataPath+'/'+str(fastq[0])+'.sam')
 	    bam.close()
 
-	    sys.stderr.write('sorting '+self.name+' bamfile '+str(fastq[0])+'...')
+	    self.TCRcaller.logfile.write('#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Sorting Sample='+self.name+' bamfileId='+str(fastq[0])+' ...\n')
 	    command = [path+'/bin/samtools-1.2/'+'samtools','sort',self.dataPath+'/'+str(fastq[0])+'.bam',self.dataPath+'/'+str(fastq[0])+'.sorted']
 	    samtools = subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE )
 	    errdata = samtools.communicate()
@@ -110,10 +114,10 @@ class Sample(object):
 	        print 'cmd: '+' '.join( command )
 	        print 'bt2 view Error code', samtools.returncode, errdata
 	        sys.exit()
-	    sys.stderr.write('done\n')
+	    #self.TCRcaller.logfile.write('done\n')
 	    os.remove(self.dataPath+'/'+str(fastq[0])+'.bam')
 
-	    sys.stderr.write('indexing '+self.name+' bamfile '+str(fastq[0])+'...')
+	    self.TCRcaller.logfile.write('#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Indexing Sample='+self.name+' bamfileId='+str(fastq[0])+' ...\n')
 	    command = [path+'/bin/samtools-1.2/'+'samtools','index',self.dataPath+'/'+str(fastq[0])+'.sorted.bam']
 	    samtools = subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE )
 	    errdata = samtools.communicate()
@@ -121,10 +125,11 @@ class Sample(object):
 	        print 'cmd: '+' '.join( command )
 	        print 'bt2 view Error code', samtools.returncode, errdata
 	        sys.exit()
-	    sys.stderr.write('done\n')
+	    #self.TCRcaller.logfile.write('done\n')
     
     def getAlignedReadsPairs(self, ):
 
+	import time
 	import glob
 	import os
 	import sys
@@ -139,7 +144,7 @@ class Sample(object):
 
 	tmpreads = open(self.dataPath+'/mappedReads.tmp','w')
 	for fastq in self.getFastqs():
-	    sys.stderr.write('getting aligned reads '+self.name+' bamfile '+str(fastq[0])+'...')
+	    self.TCRcaller.logfile.write('#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Extracting aligned reads. Sample='+self.name+' bamfileId='+str(fastq[0])+'...\n')
 	    command = [path+'/bin/samtools-1.2/'+'samtools','view','-F','4','-q','20',self.dataPath+'/'+str(fastq[0])+'.sorted.bam']
 	    samtools = subprocess.Popen(command,stdout=tmpreads,stderr=subprocess.PIPE )
 	    errdata = samtools.communicate()
@@ -147,13 +152,13 @@ class Sample(object):
 	        print 'cmd: '+' '.join( command )
 	        print 'samtools view Error code', samtools.returncode, errdata
 	        sys.exit()
-	    sys.stderr.write('done\n')
+	    #self.TCRcaller.logfile.write('done\n')
 	    os.remove(self.dataPath+'/'+str(fastq[0])+'.sorted.bam')
 	    os.remove(self.dataPath+'/'+str(fastq[0])+'.sorted.bam.bai')
 	tmpreads.close()
 
 	tmpreads2 = open(self.dataPath+'/mappedReads.2.tmp','w')
-	sys.stderr.write('converting aligned reads to fq for '+self.name+'...')
+	self.TCRcaller.logfile.write('#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Converting extracted reads to fastq-format for sample='+self.name+' ...\n')
 	command = ['cut','-f','1,10,11',tmpreads.name]
 	cut = subprocess.Popen(command,stdout=tmpreads2,stderr=subprocess.PIPE )
 	errdata = cut.communicate()
@@ -163,13 +168,12 @@ class Sample(object):
 	    sys.exit()
 	tmpreads2.close()
 	os.remove(tmpreads.name)
-
 	output = open(self.dataPath+'/mapqMoreThan20.fq','w')
 	with open(tmpreads2.name) as infile:
 	    for line in infile:
 		line=line.split()
 		output.write('@'+line[0]+'\n'+line[1]+'\n+\n'+line[2]+'\n')
-	sys.stderr.write('done\n')
+	#self.TCRcaller.logfile.write('done\n')
 	output.close()
 	os.remove(tmpreads2.name)
 
@@ -180,6 +184,7 @@ class Sample(object):
 	import sys
 	import subprocess
 	import multiprocessing
+	import time
 
         # find script path
         path = os.path.abspath(sys.argv[0])
@@ -188,32 +193,32 @@ class Sample(object):
 	try: os.mkdir(self.dataPath+'/assembly')
 	except OSError: pass
 
-	sys.stderr.write('assebly of sample '+self.name+'...\n')
+	self.TCRcaller.logfile.write('#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Starting assebly of Sample='+self.name+'...\n')
 	
 	
 	command = [path+'/bin/velvet_1.2.10/velveth',self.dataPath+'/assembly','21','-fastq','-short',self.dataPath+'/mapqMoreThan20.fq']
-	sys.stderr.write('velveth sample '+self.name+'...')# ('+' '.join(command)+') ')
+	self.TCRcaller.logfile.write('#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Running velveth Sample='+self.name+' ...\n')# ('+' '.join(command)+') ')
 	velveth = subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE )
 	errdata = velveth.communicate()
 	if velveth.returncode != 0:
 	    print 'cmd: '+' '.join( command )
 	    print 'velveth view Error code', velveth.returncode, errdata
 	    sys.exit()
-	sys.stderr.write('done\n')
+	#self.TCRcaller.logfile.write('done\n')
 	
 	command = [path+'/bin/velvet_1.2.10/velvetg',self.dataPath+'/assembly/','-cov_cutoff','auto']
-	sys.stderr.write('velvetg sample '+self.name+'...')#  ('+' '.join(command)+') ')
+	self.TCRcaller.logfile.write('#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Runnning velvetg Sample='+self.name+'...')#  ('+' '.join(command)+') ')
 	velvetg = subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE )
 	errdata = velvetg.communicate()
 	if velvetg.returncode != 0:
 	    print 'cmd: '+' '.join( command )
 	    print 'velvetg view Error code', velvetg.returncode, errdata
 	    sys.exit()
-	sys.stderr.write('done\n')
+	#self.TCRcaller.logfile.write('done\n')
 	
 	os.remove(self.dataPath+'/mapqMoreThan20.fq')
 	
-	sys.stderr.write('assebly of sample '+self.name+' finished.\n')
+	self.TCRcaller.logfile.write('#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# Assebly of Sample='+self.name+' finished.\n')
 
     def report(self,):
 #	cat $i/contigs.fa
