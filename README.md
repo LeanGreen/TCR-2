@@ -12,7 +12,7 @@ to create folders and database structures logfile etc.
 
 3. When a sample has been added it's time to add some data to that sample either by adding a pair of fastq files by the following command:
 `scripts/TCRcaller addFastq  <pathToAnalysis> <sampleName> <read1file> <read2file>`  
-or by adding a single fastq file:
+or by adding a single fastq file:  
 `scripts/TCRcaller addFastq  <pathToAnalysis> <sampleName> <singleReadsFile>` 
 
 4. If its the first time the analysis is run on the system you will need to download the tools needed this can be done by adding the term `getTools` anywhere on the commandline eg:  
