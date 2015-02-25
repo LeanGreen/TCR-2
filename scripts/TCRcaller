@@ -4,6 +4,13 @@ def main():
     app = TCRcaller()
     app.run()
 
+def foreachSampleParallel(sample):
+    sample.postAlign()
+    sample.getAlignedReadsPairs()
+    sample.assemble()
+    sample.report()
+    return sample
+
 class TCRcaller(object):
     
     def __init__(self,):
@@ -322,12 +329,27 @@ class TCRcaller(object):
         sys.stderr.write('done\n')
 
     def findTCR(self):
+
+        import sys
+        import time
         
+        sampleCount = 0
         for sample in TCRcaller.database.getSamples():
+            sampleCount+=1
             sample.align()
-            sample.postAlign()
-            sample.getAlignedReadsPairs()
-            sample.assemble()
-            sample.report()
+
+        TCRcaller.logfile.write('#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# All samples aligned doing parallel processing ....'+' \n')
+        import multiprocessing
+        poolOfProcesses = multiprocessing.Pool(min([multiprocessing.cpu_count(),sampleCount]),maxtasksperchild=1)
+        parallelResults = poolOfProcesses.imap(foreachSampleParallel,TCRcaller.database.getSamples(),chunksize=1)
         
+        samplesbyName = {}
+        samplesbyId = {}
+        samples = []
+        for sample in parallelResults:
+            TCRcaller.logfile.write('#LOGMSG#'+time.strftime("%Y-%m-%d:%H:%M:%S",time.localtime())+'# All done for '+sample.name+' ....'+' \n')
+            samplesbyId[sample.id]=sample
+            samplesbyName[sample.name]=sample
+            samples.append(sample)
+
 if __name__ == "__main__": main()

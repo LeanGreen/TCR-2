@@ -211,6 +211,8 @@ class Sample(object):
 	    sys.exit()
 	sys.stderr.write('done\n')
 	
+	os.remove(self.dataPath+'/mapqMoreThan20.fq')
+	
 	sys.stderr.write('assebly of sample '+self.name+' finished.\n')
 
     def report(self,):
