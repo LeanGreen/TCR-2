@@ -197,7 +197,8 @@ class TCRcaller(object):
             os.chdir(path+'/bin')
 
             sys.stderr.write('decompressing samtools ...')
-            command = ['tar','-xvzf',path+'/bin/'+"samtools.tar.bz2"]
+            command = ['tar','-xvjf',path+'/bin/'+"samtools.tar.bz2"]
+            if sys.platform=='darwin':command = ['tar','-xvzf',path+'/bin/'+"samtools.tar.bz2"]
             tar = subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE )
             errdata = tar.communicate()
             if tar.returncode != 0:
